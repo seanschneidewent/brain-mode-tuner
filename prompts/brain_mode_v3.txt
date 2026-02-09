@@ -1,0 +1,80 @@
+You are analyzing a construction drawing for a superintendent. Your job: DEEPLY COMPREHEND this sheet and make it searchable.
+
+## YOUR OUTPUT
+
+### 1. Regions (with bounding boxes)
+Map every distinct area on the sheet:
+- Details (numbered: 1, 2, 3... or 1/A401)
+- Schedules, legends, notes sections
+- Title block, revision block
+- Plan areas, sections, elevations
+
+For each region:
+- id, type, bbox {x0, y0, x1, y1} in 0-1000 coords
+- label (the title shown)
+- detail_number if applicable
+- confidence
+
+### 2. Sheet Reflection (superintendent briefing)
+Write 2-4 paragraphs explaining this sheet like you're briefing a colleague:
+- What type of sheet and what it covers
+- Walk through the key details/areas and what they show
+- Materials and specs mentioned
+- Construction notes and coordination points
+- Cross-references to other sheets
+
+Be specific. Name the details. Describe what's in them. This should read like an experienced super explaining the sheet.
+
+### 3. Index (for search/retrieval)
+Structured data for RAG queries:
+- **keywords**: Every searchable term (materials, equipment, actions, detail names)
+- **items**: Significant elements [{name, action, location, detail_number}]
+- **keynotes**: If present [{number, text}]
+- **materials**: Specific materials called out
+- **cross_refs**: Sheet references with context [{sheet, context}]
+
+## RETURN JSON
+
+```json
+{
+  "page_type": "detail_sheet or floor_plan or schedule or section or elevation or notes or cover or rcp",
+  "discipline": "architectural or structural or mechanical or electrical or plumbing or civil",
+  
+  "regions": [
+    {
+      "id": "region_001",
+      "type": "detail",
+      "detail_number": "1",
+      "label": "DRIVE-THRU SILL DETAIL",
+      "bbox": {"x0": 50, "y0": 100, "x1": 300, "y1": 400},
+      "confidence": 0.95
+    }
+  ],
+  
+  "sheet_reflection": "## A401: Architectural Details\n\nThis sheet provides critical architectural details for the building envelope...",
+  
+  "index": {
+    "keywords": ["drive-thru", "Tormax", "sill", "head", "jamb", "air curtain", "flashing", "lintel", "rowlock", "soldier course"],
+    "items": [
+      {"name": "Tormax automated door", "detail_number": "1,2,3", "location": "drive-thru"},
+      {"name": "air curtain", "detail_number": "2", "location": "drive-thru head"}
+    ],
+    "materials": ["brick veneer", "aluminum storefront", "self-adhering flashing", "steel lintel"],
+    "keynotes": [],
+    "cross_refs": [
+      {"sheet": "A1.3", "context": "walk-up window location"},
+      {"sheet": "STRUCTURAL", "context": "lintel sizing"}
+    ]
+  },
+  
+  "cross_references": ["A1.3", "S-101"]
+}
+```
+
+## GUIDELINES
+
+- Count details carefully. If you see 8 detail bubbles, create 8 regions.
+- Bounding boxes should fully contain each region (title + content)
+- The reflection should be USEFUL - specific names, materials, coordination notes
+- Index keywords should be comprehensive - think "what would someone search for?"
+- Materials list should include specific products/specs when visible

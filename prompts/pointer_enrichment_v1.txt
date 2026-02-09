@@ -1,0 +1,162 @@
+You are deeply analyzing a single region from a construction drawing. You have already seen the full sheet and identified this region during a first pass. Now focus exclusively on this cropped area and extract EVERYTHING.
+
+## CONTEXT FROM PASS 1
+
+Sheet: {sheet_number} — {sheet_title}
+Discipline: {discipline}
+Region: {region_type} — {region_label}
+{detail_number_line}
+
+Sheet Summary:
+{sheet_reflection}
+
+Your first impression of this region:
+{region_index_text}
+
+Full keynote list from this sheet:
+{keynotes_text}
+
+Cross-referenced sheets:
+{cross_refs_text}
+
+## YOUR TASK
+
+Look at the cropped region image. Read EVERYTHING visible:
+- Every line of text, every dimension string, every callout
+- Every material indication (hatching patterns, labels, specs)
+- Every connection point (how does this detail meet adjacent assemblies?)
+- Every note, flag, or reference marker
+
+Then produce two things:
+
+### 1. content_markdown
+Write a structured markdown technical brief for this region. A superintendent should be able to hand this to a subcontractor and they know exactly what to build.
+
+**For DETAILS:**
+```markdown
+## Detail {number} — {title}
+**Scale:** {scale}
+
+{Brief description of what this detail shows}
+
+### Assembly (exterior to interior)
+1. **{material}** — {spec}, {attachment method}
+2. **{material}** — {spec}
+...
+
+### Key Dimensions
+- {dimension}: {value}
+- {dimension}: {value}
+
+### Coordination
+- {coordination note}
+- See **{sheet} Detail {number}** for {related condition}
+```
+
+**For PLANS:**
+```markdown
+## {Plan Title}
+**Scale:** {scale}
+
+{Brief description}
+
+### Key Areas
+- **{area}** — {what's happening there}
+
+### Major Modifications
+- INSTALL: {item} (Keynote {N})
+- DEMOLISH: {item}
+
+### Referenced Keynotes
+- **KN {N}:** {text}
+
+### Coordination
+- {trade}: {coordination note}
+```
+
+**For KEYNOTES:**
+```markdown
+## Key Notes
+
+1. {KEYNOTE TEXT IN CAPS}
+2. {KEYNOTE TEXT}
+...
+```
+
+**For SCHEDULES:**
+```markdown
+## {Schedule Title}
+
+| {Col1} | {Col2} | {Col3} |
+|--------|--------|--------|
+| {val}  | {val}  | {val}  |
+```
+
+### 2. Structured fields
+Extract the same information as queryable data.
+
+## OUTPUT JSON
+
+Return a JSON object with these fields:
+
+{
+  "content_markdown": "The full markdown document as a string",
+  "materials": ["list of materials mentioned"],
+  "dimensions": ["list of dimensions read"],
+  "keynotes_referenced": [{"number": "1", "text": "keynote text"}],
+  "specifications": ["list of specs"],
+  "cross_references": [{"sheet": "A401", "detail": "2", "context": "why referenced"}],
+  "coordination_notes": ["things to coordinate with other trades"],
+  "questions_answered": ["questions this region answers"]
+}
+
+**For DETAILS, also include:**
+```json
+{
+  "assembly": [
+    {"position": 1, "layer": "finish", "material": "FRP", "spec": "per schedule", "thickness": "1/16\"", "attachment": "adhesive"},
+    {"position": 2, "layer": "substrate", "material": "CDX plywood", "thickness": "1/2\""}
+  ],
+  "connections": [
+    {"to": "floor slab", "condition": "membrane laps onto slab 4\" minimum"},
+    {"to": "wall above", "condition": "continuous vapor barrier"}
+  ]
+}
+```
+
+**For PLANS, also include:**
+```json
+{
+  "areas": [{"name": "kitchen", "notes": "new equipment layout per food service"}],
+  "equipment": [{"name": "Tormax sliding door", "location": "drive-thru", "keynote": "1"}],
+  "modifications": [{"action": "install", "item": "Tormax door", "location": "drive-thru"}]
+}
+```
+
+**For KEYNOTES, also include:**
+```json
+{
+  "keynotes": [
+    {"number": "1", "text": "NEW TORMAX SLIDING DRIVE-THRU DOOR"},
+    {"number": "2", "text": "NEW WALK-UP WINDOW PER DETAIL 8/A401"}
+  ],
+  "symbol_definitions": [{"symbol": "triangle with number", "meaning": "detail reference marker"}]
+}
+```
+
+**For SCHEDULES, also include:**
+```json
+{
+  "schedule_type": "door_schedule",
+  "columns": ["mark", "width", "height", "type", "hardware_set", "notes"],
+  "rows": [{"mark": "101", "width": "3'-0\"", "height": "7'-0\"", "type": "HM", "hardware_set": "1", "notes": "fire rated"}]
+}
+```
+
+## CRITICAL INSTRUCTIONS
+
+1. **READ EVERY DIMENSION** — If you can see "3'-6\"" written anywhere, include it
+2. **READ EVERY NOTE** — Every piece of text visible in this crop
+3. **IDENTIFY MATERIALS** — Use hatching patterns, labels, and context
+4. **TRACE CONNECTIONS** — How does this detail connect to adjacent assemblies?
+5. **BE SPECIFIC** — "FRP panel" not "finish material", "2x6 @ 16\" O.C." not "wood framing"

@@ -1,0 +1,147 @@
+You are analyzing a construction drawing for a superintendent. Your job is to create a SEARCHABLE INDEX that will power RAG retrieval.
+
+## CRITICAL CONTEXT
+This analysis will be embedded and searched when a superintendent asks questions like:
+- "Where is the air curtain shown?"
+- "What's being demolished in the kitchen?"
+- "What keynotes are on the demo RCP?"
+- "Show me the door schedule"
+
+Your output must contain the EXACT TERMS a superintendent would search for.
+
+## OUTPUT STRUCTURE
+
+Return JSON with this structure:
+
+```json
+{
+  "page_type": "floor_plan|detail_sheet|schedule|section|elevation|notes|cover|rcp|demo",
+  "discipline": "architectural|structural|mechanical|electrical|plumbing|civil|kitchen|canopy",
+  
+  "sheet_info": {
+    "number": "A002",
+    "title": "DEMOLITION RCP",
+    "full_title": "A002 - DEMOLITION RCP",
+    "scale": "1/4\" = 1'-0\"",
+    "date": "03.27.2025"
+  },
+  
+  "index": {
+    "keywords": [
+      "demolition", "RCP", "reflected ceiling plan", "ceiling", 
+      "air curtain", "canopy", "ACT", "acoustic ceiling tile"
+    ],
+    
+    "areas_shown": [
+      {"name": "kitchen", "notes": "ceiling demolition area"},
+      {"name": "dining", "notes": "ACT ceiling to be removed"},
+      {"name": "hallway", "notes": "existing grid to remain"}
+    ],
+    
+    "items": [
+      {
+        "name": "air curtain",
+        "action": "demolish",
+        "location": "entry door",
+        "keynote": "7",
+        "details": "remove existing air curtain at entry"
+      },
+      {
+        "name": "exterior canopies",
+        "action": "protect",
+        "location": "F2F, OMD, Patio",
+        "details": "protect during construction"
+      }
+    ],
+    
+    "keynotes": [
+      {"number": "1", "text": "Existing ACT ceiling to be removed"},
+      {"number": "2", "text": "Existing grid to remain"},
+      {"number": "7", "text": "Remove air curtain"}
+    ],
+    
+    "dimensions": ["14'-0\"", "21'-6\"", "8'-0\" AFF"],
+    
+    "specifications": [
+      "ACT ceiling: remove in shaded areas",
+      "Existing grid: coordinate with electrical"
+    ],
+    
+    "cross_references": [
+      {"sheet": "A201", "context": "new RCP configuration"},
+      {"sheet": "A301", "context": "exterior elevations showing canopies"}
+    ]
+  },
+  
+  "regions": [
+    {
+      "id": "region_001",
+      "type": "plan_area",
+      "label": "DEMOLITION RCP",
+      "bbox": {"x0": 50, "y0": 80, "x1": 750, "y1": 850},
+      "confidence": 0.95,
+      "contains": ["kitchen", "dining", "hallway", "restrooms"]
+    },
+    {
+      "id": "region_002", 
+      "type": "legend",
+      "label": "KEYNOTES",
+      "bbox": {"x0": 760, "y0": 80, "x1": 950, "y1": 400},
+      "confidence": 0.95
+    }
+  ],
+  
+  "questions_this_sheet_answers": [
+    "What ceiling work is being demolished?",
+    "Where is the air curtain located?",
+    "What needs to be protected during demolition?",
+    "What keynotes are on the demo RCP?",
+    "What's the ceiling demolition scope?"
+  ],
+  
+  "superintendent_summary": "Demo RCP showing ceiling elements to remove (ACT in dining/kitchen) and protect (canopies, air curtain locations marked). Key coordination: electrical fixtures in demo zones. See A201 for new configuration."
+}
+```
+
+## GUIDELINES
+
+### Keywords
+Extract EVERY searchable term:
+- Equipment names (air curtain, RTU, VAV box)
+- Materials (ACT, gypsum board, CMU)
+- Actions (demolish, remove, protect, relocate, install)
+- Drawing types (RCP, floor plan, section, detail)
+- Abbreviations AND full names
+
+### Items
+For each significant item shown:
+- What is it?
+- What's happening to it? (action)
+- Where on the sheet? (location/area)
+- Any keynote or callout number?
+- Relevant details
+
+### Areas Shown
+List every room/area visible:
+- Kitchen, dining, hallway, restrooms, office
+- Service yard, drive-thru, patio
+- Include notes about what's shown in each area
+
+### Cross References
+Don't just list sheet numbers — provide context:
+- "A201" → {"sheet": "A201", "context": "new RCP showing final ceiling configuration"}
+
+### Questions This Sheet Answers
+Pre-generate 3-5 natural questions a super might ask that this sheet answers. These become searchable.
+
+### Superintendent Summary
+2-3 sentences maximum. Focus on:
+- What does this sheet tell me to DO?
+- What coordination is needed?
+- What's the key takeaway?
+
+## BOUNDING BOX FORMAT
+Use 0-1000 normalized coordinates where (0,0) is top-left.
+
+PAGE NAME: {page_name}
+DISCIPLINE: {discipline}

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain Mode Tuner</title>
+    <link rel="stylesheet" href="/styles.css?v=5">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>🧠 Brain Mode Tuner</h1>
+            </div>
+            
+            <nav class="nav">
+                <button class="nav-btn active" data-view="dashboard">📊 Dashboard</button>
+                <button class="nav-btn" data-view="pages">📄 Pages</button>
+                <button class="nav-btn" data-view="prompts">✏️ Prompts</button>
+                <button class="nav-btn" data-view="stats">📈 Stats</button>
+            </nav>
+            
+            <div class="sidebar-section">
+                <h3>Quick Actions</h3>
+                <button id="scan-btn" class="action-btn">🔍 Scan PDFs</button>
+                <button id="batch-btn" class="action-btn">⚡ Process Batch</button>
+            </div>
+            
+            <div class="sidebar-section disciplines-section">
+                <h3>Disciplines</h3>
+                <div id="disciplines-list" class="disciplines-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <div id="dashboard-view" class="view active">
+                <div class="view-header">
+                    <h2>Dashboard</h2>
+                    <span id="processing-indicator" class="processing-indicator hidden">
+                        ⏳ Processing...
+                    </span>
+                </div>
+                
+                <div class="stats-grid" id="stats-overview">
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-total-pages">-</div>
+                        <div class="stat-label">Total Pages</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-processed">-</div>
+                        <div class="stat-label">Processed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-success-rate">-</div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-avg-time">-</div>
+                        <div class="stat-label">Avg Time (ms)</div>
+                    </div>
+                </div>
+                
+                <div class="recent-section">
+                    <h3>Processing Status</h3>
+                    <div id="batch-status" class="batch-status">
+                        <p>No batch processing active</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pages View -->
+            <div id="pages-view" class="view">
+                <div class="view-header">
+                    <h2>Pages</h2>
+                    <div class="view-controls">
+                        <select id="filter-discipline">
+                            <option value="">All Disciplines</option>
+                        </select>
+                        <select id="filter-processed">
+                            <option value="">All Status</option>
+                            <option value="true">Processed</option>
+                            <option value="false">Unprocessed</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="pages-grid" class="pages-grid">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+            
+            <!-- Page Detail Modal -->
+            <div id="page-modal" class="modal hidden">
+                <div class="modal-content page-detail">
+                    <button class="modal-close">&times;</button>
+                    
+                    <div class="page-detail-layout">
+                        <!-- Image with overlays -->
+                        <div class="page-image-container">
+                            <div class="page-image-wrapper">
+                                <div class="image-overlay-container">
+                                    <img id="page-image" src="" alt="Page">
+                                    <svg id="region-overlay" class="region-overlay"></svg>
+                                </div>
+                            </div>
+                            <div class="image-controls">
+                                <button id="toggle-regions" class="control-btn active">Show Regions</button>
+                                <button id="process-btn" class="control-btn primary">🧠 Pass 1</button>
+                                <button id="enrich-btn" class="control-btn primary" title="Run Pass 2 enrichment on all regions">🔬 Pass 2</button>
+                                <button id="edit-boxes-btn" class="control-btn" title="Manually edit bounding boxes">✏️ Edit Boxes</button>
+                                <button id="save-boxes-btn" class="control-btn primary hidden" title="Save edited boxes">💾 Save</button>
+                                <button id="cancel-edit-btn" class="control-btn hidden" title="Cancel editing">✖ Cancel</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Results panel -->
+                        <div class="results-panel">
+                            <div class="page-info">
+                                <h3 id="page-name">-</h3>
+                                <p id="page-discipline">-</p>
+                            </div>
+                            
+                            <div class="result-tabs">
+                                <button class="tab-btn active" data-tab="reflection">Reflection</button>
+                                <button class="tab-btn" data-tab="regions">Regions</button>
+                                <button class="tab-btn" data-tab="enrichments">Pass 2</button>
+                                <button class="tab-btn" data-tab="json">Raw JSON</button>
+                                <button class="tab-btn" data-tab="history">History</button>
+                            </div>
+                            
+                            <div class="tab-content">
+                                <div id="tab-reflection" class="tab-pane active">
+                                    <div id="sheet-reflection" class="markdown-content">
+                                        <p class="placeholder">No results yet. Click "Process" to analyze.</p>
+                                    </div>
+                                    <div class="meta-info">
+                                        <span id="page-type-badge" class="badge">-</span>
+                                        <span id="processing-time" class="meta">-</span>
+                                    </div>
+                                    <div id="cross-refs" class="cross-refs"></div>
+                                </div>
+                                
+                                <div id="tab-regions" class="tab-pane">
+                                    <div id="regions-list" class="regions-list">
+                                        <p class="placeholder">No regions detected.</p>
+                                    </div>
+                                </div>
+                                
+                                <div id="tab-enrichments" class="tab-pane">
+                                    <div id="enrichment-status" class="enrichment-status hidden">
+                                        <p><strong>Enriching:</strong> <span id="enrich-current">...</span></p>
+                                        <div class="progress-bar">
+                                            <div id="enrich-progress" class="progress-fill" style="width: 0%"></div>
+                                        </div>
+                                        <p class="status-text"><span id="enrich-completed">0</span> of <span id="enrich-total">0</span></p>
+                                    </div>
+                                    <div id="enrichments-list" class="enrichments-list">
+                                        <p class="placeholder">No enrichments yet. Click "🔬 Pass 2" to enrich regions.</p>
+                                    </div>
+                                </div>
+                                
+                                <div id="tab-json" class="tab-pane">
+                                    <pre id="raw-json" class="json-output"><code>{}</code></pre>
+                                </div>
+                                
+                                <div id="tab-history" class="tab-pane">
+                                    <div id="results-history" class="results-history">
+                                        <p class="placeholder">No processing history.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Prompts View -->
+            <div id="prompts-view" class="view">
+                <div class="view-header">
+                    <h2>Prompt Tuning</h2>
+                </div>
+                
+                <div class="prompts-layout">
+                    <div class="prompts-list-section">
+                        <h3>Prompt Versions</h3>
+                        <div id="prompts-list" class="prompts-list">
+                            <!-- Populated dynamically -->
+                        </div>
+                        <button id="new-prompt-btn" class="action-btn">+ New Version</button>
+                    </div>
+                    
+                    <div class="prompt-editor-section">
+                        <h3>Edit Prompt</h3>
+                        <input type="text" id="prompt-name" placeholder="Prompt version name...">
+                        <textarea id="prompt-text" placeholder="Enter the Brain Mode prompt..."></textarea>
+                        <div class="editor-actions">
+                            <button id="save-prompt-btn" class="action-btn primary">💾 Save & Activate</button>
+                            <button id="test-prompt-btn" class="action-btn">🧪 Test on Sample</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stats View -->
+            <div id="stats-view" class="view">
+                <div class="view-header">
+                    <h2>Statistics</h2>
+                </div>
+                
+                <div class="stats-detail">
+                    <div class="stats-section">
+                        <h3>By Discipline</h3>
+                        <div id="stats-by-discipline" class="stats-table">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                    
+                    <div class="stats-section">
+                        <h3>By Page Type</h3>
+                        <div id="stats-by-type" class="stats-table">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Batch Modal -->
+    <div id="batch-modal" class="modal hidden">
+        <div class="modal-content batch-modal-content">
+            <button class="modal-close">&times;</button>
+            <h3>Batch Processing</h3>
+            <p>Select pages to process:</p>
+            
+            <div class="batch-options">
+                <label>
+                    <input type="radio" name="batch-select" value="unprocessed" checked>
+                    All unprocessed pages
+                </label>
+                <label>
+                    <input type="radio" name="batch-select" value="discipline">
+                    By discipline:
+                    <select id="batch-discipline"></select>
+                </label>
+                <label>
+                    <input type="radio" name="batch-select" value="custom">
+                    Custom count:
+                    <input type="number" id="batch-count" value="10" min="1" max="100">
+                </label>
+            </div>
+            
+            <div class="batch-actions">
+                <button id="start-batch-btn" class="action-btn primary">▶️ Start Processing</button>
+                <button class="action-btn cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast notifications -->
+    <div id="toast-container" class="toast-container"></div>
+    
+    <script src="/app.js?v=5"></script>
+</body>
+</html>
